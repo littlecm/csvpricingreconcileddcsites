@@ -30,7 +30,8 @@ def reconcile_prices(vinsolutions_data, dealerdotcom_data, dealer_id, vinsolutio
         vehicle_type = row[vinsolutions_type_field].strip()  # Ensure vehicle type is stripped of leading/trailing spaces
         vinsolutions_price = row[vinsolutions_new_price_field] if vehicle_type == 'New' else row[vinsolutions_used_price_field]
 
-        dealerdotcom_vehicle = filtered_dealerdotcom_data[filtered_dealerdotcom_data['VIN'] == vin]
+        # Use 'vin' instead of 'VIN' to match the column name in dealerdotcom_data
+        dealerdotcom_vehicle = filtered_dealerdotcom_data[filtered_dealerdotcom_data['vin'] == vin]
         
         if not dealerdotcom_vehicle.empty:
             dealerdotcom_price = dealerdotcom_vehicle.iloc[0][dealerdotcom_new_price_field] if vehicle_type == 'New' else dealerdotcom_vehicle.iloc[0][dealerdotcom_used_price_field]
@@ -45,6 +46,7 @@ def reconcile_prices(vinsolutions_data, dealerdotcom_data, dealer_id, vinsolutio
                 })
 
     return pd.DataFrame(price_discrepancies)
+
 
 # Streamlit UI setup
 st.title("Vehicle Pricing Reconciliation")
