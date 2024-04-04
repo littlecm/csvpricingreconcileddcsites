@@ -69,8 +69,8 @@ vinsolutions_type_field = st.text_input("Vinsolutions Type Field Label", value="
 vinsolutions_new_price_field = st.text_input("Vinsolutions New Vehicle Price Field", value="BookValue")
 vinsolutions_used_price_field = st.text_input("Vinsolutions Used Vehicle Price Field", value="SellingPrice")
 
-dealerdotcom_new_price_field = st.text_input("Dealerdotcom New Vehicle Price Field", value="RetailValue")
-dealerdotcom_used_price_field = st.text_input("Dealerdotcom Used Vehicle Price Field", value="InternetPrice")
+dealerdotcom_new_price_field = st.text_input("Dealerdotcom New Vehicle Price Field", value="retailvalue")
+dealerdotcom_used_price_field = st.text_input("Dealerdotcom Used Vehicle Price Field", value="internetprice")
 
 # Reconcile prices on button click
 if st.button("Reconcile Prices"):
