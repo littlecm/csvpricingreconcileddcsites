@@ -3,6 +3,7 @@ import requests
 import pandas as pd
 from io import StringIO
 
+# Function to download CSV content from a given URL
 def download_csv(url):
     response = requests.get(url)
     if response.ok:
@@ -10,16 +11,18 @@ def download_csv(url):
     else:
         return None
 
+# Function to read CSV from content with specified encoding, handling UnicodeDecodeError
 def read_csv_with_encoding(content, encoding='utf-8'):
     try:
         return pd.read_csv(StringIO(content.decode(encoding)))
     except UnicodeDecodeError:
         return pd.read_csv(StringIO(content.decode('ISO-8859-1')))
 
+# Function to reconcile prices between Vinsolutions data and Dealerdotcom data
 def reconcile_prices(vinsolutions_data, dealerdotcom_data, dealer_id, vinsolutions_type_field, vinsolutions_new_price_field, vinsolutions_used_price_field, dealerdotcom_new_price_field, dealerdotcom_used_price_field):
     price_discrepancies = []
     
-    # Filter the dealerdotcom_data by dealer_id
+    # Filter the Dealerdotcom data by dealer_id
     filtered_dealerdotcom_data = dealerdotcom_data[dealerdotcom_data['dealer_id'] == dealer_id]
 
     for index, row in vinsolutions_data.iterrows():
@@ -43,35 +46,40 @@ def reconcile_prices(vinsolutions_data, dealerdotcom_data, dealer_id, vinsolutio
 
     return pd.DataFrame(price_discrepancies)
 
-# Streamlit UI
+# Streamlit UI setup
 st.title("Vehicle Pricing Reconciliation")
 
-vinsolutions_url = st.text_input("Vinsolutions Feed URL")
-dealer_id = st.text_input("Dealerdotcom Dealer ID")
-
-# Predefined Dealerdotcom CSV Feed URL
+# Download Dealerdotcom data and prepare dealer_id dropdown
 dealerdotcom_csv_url = "https://feeds.amp.auto/feeds/coxautomotive/dealerdotcom.csv"
+dealerdotcom_content = download_csv(dealerdotcom_csv_url)
+if dealerdotcom_content:
+    dealerdotcom_data = read_csv_with_encoding(dealerdotcom_content)
+    dealer_ids = dealerdotcom_data['dealer_id'].unique().tolist()
+else:
+    st.error("Failed to download Dealerdotcom data.")
+    dealer_ids = []
+
+# User inputs
+vinsolutions_url = st.text_input("Vinsolutions Feed URL")
+selected_dealer_id = st.selectbox("Select Dealer ID", dealer_ids)
 
 vinsolutions_type_field = st.text_input("Vinsolutions Type Field Label", value="Type")
-
 vinsolutions_new_price_field = st.text_input("Vinsolutions New Vehicle Price Field", value="BookValue")
 vinsolutions_used_price_field = st.text_input("Vinsolutions Used Vehicle Price Field", value="SellingPrice")
 
 dealerdotcom_new_price_field = st.text_input("Dealerdotcom New Vehicle Price Field", value="RetailValue")
 dealerdotcom_used_price_field = st.text_input("Dealerdotcom Used Vehicle Price Field", value="InternetPrice")
 
+# Reconcile prices on button click
 if st.button("Reconcile Prices"):
-    if vinsolutions_url and dealer_id:
+    if vinsolutions_url and selected_dealer_id:
         vinsolutions_content = download_csv(vinsolutions_url)
-        dealerdotcom_content = download_csv(dealerdotcom_csv_url)
         
-        if vinsolutions_content and dealerdotcom_content:
+        if vinsolutions_content:
             vinsolutions_data = read_csv_with_encoding(vinsolutions_content)
-            dealerdotcom_data = read_csv_with_encoding(dealerdotcom_content)
-            
-            discrepancies_df = reconcile_prices(vinsolutions_data, dealerdotcom_data, dealer_id, vinsolutions_type_field, vinsolutions_new_price_field, vinsolutions_used_price_field, dealerdotcom_new_price_field, dealerdotcom_used_price_field)
+            discrepancies_df = reconcile_prices(vinsolutions_data, dealerdotcom_data, selected_dealer_id, vinsolutions_type_field, vinsolutions_new_price_field, vinsolutions_used_price_field, dealerdotcom_new_price_field, dealerdotcom_used_price_field)
             st.write(discrepancies_df)
         else:
-            st.error("Failed to download one or both CSV files.")
+            st.error("Failed to download Vinsolutions data.")
     else:
         st.error("Please fill in all input fields.")
